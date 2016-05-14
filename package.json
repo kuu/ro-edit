@@ -1,0 +1,27 @@
+{
+  "name": "ro-edit",
+  "version": "0.0.1",
+  "description": "A simple video editing tool for track composition, trimming, av-sync adjustment, etc.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "prepublish": "npm run build && dist-es6"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kuu/ro-edit.git"
+  },
+  "keywords": [
+    "Video Editing"
+  ],
+  "author": "Kuu Miyazaki",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/kuu/ro-edit/issues"
+  },
+  "homepage": "https://github.com/kuu/ro-edit",
+  "dependencies": {
+    "dist-es6": "^0.1.18",
+    "kontainer-js": "^2.1.1"
+  }
+}
