@@ -144,24 +144,24 @@ $ ro ls file.mp4
 
 ### Remove a track from a file
 ```
-$ cat file.mp4 | ro drop 0
+$ cat file.mp4 | ro drop 0 > output.mp4
  => Removes the first track
 ```
 
 ### Adjust av-sync
 ```
-$ cat file.mp4 | ro shift 0 -10
+$ cat file.mp4 | ro shift 0 -10 > output.mp4
  => Shifts the first track 10 seconds backward
 ```
 
 ### Composite files
 ```
-$ ro merge video.webm audio-en.webm audio-fr.webm
+$ ro merge video.webm audio-en.webm audio-fr.webm > output.webm
 ```
 
 ### Trim a file
 ```
-$ cat file.webm | ro slice 10 50
+$ cat file.webm | ro slice 10 50 > output.webm
  => Extract the middle of the file (10-49 seconds)
    i.e. cuts off the first 10 seconds and the last 10 seconds
    (supposing the original duration was 60 seconds.)
