@@ -1,5 +1,5 @@
 # ro-edit
-A simple video editing tool written in JavaScript. It focuses on track composition, trimming, and av-sync adjustment. `ro-edit` is built on top of [`kontainer-js`](https://www.npmjs.com/package/kontainer-js) so it can be used on Node.js and in the browser.
+A simple video editing tool written in JavaScript. It focuses on track composition, trimming, and av-sync adjustment.
 
 ## Features
 
@@ -20,75 +20,72 @@ A simple video editing tool written in JavaScript. It focuses on track compositi
 
 ### Example
 ```js
-import Kontainer from 'kontainer-js';
-import {Timeline} from 'ro-edit';
+import fs from 'fs';
+import ro from 'ro-edit';
 
-// Parse MP4 files and create KontainerElements
-const mainTrack = Kontainer.createElementFromBuffer(fs.readFileSync('./video.mp4'));
-const audioTrackJapanese = Kontainer.createElementFromBuffer(fs.readFileSync('./audio-jp.mp4'));
-const audioTrackFrench = Kontainer.createElementFromBuffer(fs.readFileSync('./audio-fr.mp4'));
+// Apply changes to a video file
+fs.createReadStream('./main.mp4')
+.pipe(ro.add('./audio-jp.mp4')) // Add second language
+.pipe(ro.add('./audio-fr.mp4')) // Add another language
+.pipe(ro.drop(0)) // Remove the first track
+.pipe(ro.shift(1, -10)) // Shift the second track 10 seconds backward
+.pipe(ro.slice(10, 50)) // Trim the first 10 seconds and the last 10 seconds
+.pipe(fs.createWriteStream('./output.mp4')); // Done
 
-// Create a new file from the above three tracks
-const tl = new Timeline();
-tl.import(mainTrack);
-tl.import(audioTrackJapanese);
-tl.import(audioTrackFrench);
-
-// Get track information
-const tracks = tl.getTracks();
-
-// Remove all video tracks
-tracks.forEach(track => {
-  if (track.type === 'video') {
-    tl.drop(track.index);
-  }
+// Or, you can inspect the stream to learn the structure of the file
+fs.createReadStream('./main.mp4')
+.pipe(ro.inspect((track, i) => {
+  console.log(`Track[${i}]: type=${track.type} name=${track.name}`);
 });
-
-// Cut off the first 10 seconds
-tl.slice(10);
-
-// Write the result into a file
-fs.writeFileSync('audio-only.mp4', Kontainer.render(tl.export()));
-
 ```
 
-### `class Timeline`
-Represents a media file with multiple tracks that share the same timeline.
+### Methods
 
-#### `import(element)`
-Incorporates the specified `KontainerElement` into this `Timeline` instance.
+#### `add(files)`
+Merge files.
 
 ##### params
 
 | name | type | description |
 |---|---|---|
-| element | `KontainerElement` | An element obtained via `kontainer-js` |
+| `files` | String, file object, or array of those types| Specifies additional file(s) |
 
 ##### return value
-none
+A transform stream
 
-#### `getTracks()`
-Returns a list of objects that holds track information.
+---
+#### `inspect(callback)`
+Provides a way to inspect track information.
 
 ##### params
-none
+| name | type | description |
+|---|---|---|
+| `callback` | Function | A function with the following signature |
 
 ##### return value
-| type | description |
-|---|---|
-| [`TrackInfo`] | A list of `TrackInfo` instances. |
+A transform stream
 
+###### params of `callback`
+| name | type | description |
+|---|---|---|
+| `track` | Object | An object that holds `type`, `name`, `duration`, etc. of the track TBD.|
+
+##### return value of `callback`
+none
+
+---
 #### `drop(index)`
-Removes the specified track from this `Timeline` instance.
+Removes the specified track from the file.
 
 ##### params
 | name | type | description |
 |---|---|---|
-| index  | `Number` | Index in the track info. |
+| index  | `Number` | The index of the track within the file |
 
 ##### return value
-none
+A transform stream
 
+---
 #### `shift(index, offset)`
 Adjusts AV-sync by repositioning the specified track forward/backward according to the `offset`
 
@@ -99,8 +96,9 @@ Adjusts AV-sync by repositioning the specified track forward/backward according 
 | offset  | `Number` | Signed number in seconds. e.g. -10 means repositioning 10 seconds backward |
 
 ##### return value
-none
+A transform stream
 
+---
 #### `slice(start, end)`
 Cuts off any other parts than the specified range of the file.
 
@@ -110,30 +108,9 @@ Cuts off any other parts than the specified range of the file.
 | end  | `Number` | The position in seconds. The last n seconds of the file will be cut off, where n = `the file's duration - end`. The default value is the file's duration. |
 
 ##### return value
-none
+A transform stream
 
-#### `export()`
-Returns a `KontainerElement` after applying any changes made to this `Timeline` instance so far.
-
-##### params
-none
-
-##### return value
-| type | description |
-|---|---|
-| `KontainerElement` | The result of the editing. |
-
-### `class TrackInfo`
-Holds some properties of a track.
-
-#### properties
-| name | type | description |
-|---|---|---|
-| index  | `Number` | A unique id for this `TrackInfo` instance |
-| type  | `String` | 'video' or 'audio' or 'subtitle' |
-| name  | `String` | A descriptive name for this `TrackInfo` instance |
-| duration  | `Number` | Duration in seconds. |
-| segmentLength  | `Number` | Segment length in seconds. This is the minimum unit of editing. |
+---
 
 ## CLI
 
@@ -154,12 +131,12 @@ $ cat file.mp4 | ro shift 0 -10 > output.mp4
  => Shifts the first track 10 seconds backward
 ```
 
-### Composite files
+### File composition
 ```
 $ ro merge video.webm audio-en.webm audio-fr.webm > output.webm
 ```
 
-### Trim a file
+### Trimming
 ```
 $ cat file.webm | ro slice 10 50 > output.webm
  => Extract the middle of the file (10-49 seconds)
