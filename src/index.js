@@ -1,45 +1,69 @@
-class TrackInfo {
-  constructor({index, type, name, duration, segmentLength}) {
-    this.index = index; // A unique id for this TrackInfo instance
-    this.type	= type; // 'video' or 'audio' or 'subtitle'
-    this.name	= name; // A descriptive name for this TrackInfo instance
-    this.duration	= duration; // Duration in seconds.
-    this.segmentLength = segmentLength; // Segment length in seconds. This is the minimum unit of editing.
-  }
+import isStream from 'is-stream';
+import fs from 'fs';
+import Kontainer from 'kontainer-js';
+import MP4 from './MP4';
+import WebM from './WebM';
+
+function _createMergeTransform(files, options) {
+  let merge = null;
+  const transform = Kontainer.transform((...params) => {
+    merge && merge(...params);
+  });
+  transform.on('format', (format) => {
+    if (merge) {
+      return;
+    }
+    //console.log(`format event: ${format}`);
+    if (format === 'mp4') {
+      merge = MP4.createMergeFunction(files, options);
+    } else if (format === 'webm') {
+      merge = WebM.createMergeFunction(files, options);
+    }
+  });
+  return transform;
 }
 
-export class Timeline {
-  constructor() {
+function add(files) {
+  let toBeMerged;
 
+  if (Array.isArray(files)) {
+    toBeMerged = files;
+  } else {
+    toBeMerged = [files];
   }
+  toBeMerged = toBeMerged.filter((file, i) => {
+    if (isStream(file)) {
+      return true;
+    } else if (typeof file === 'string') {
+      toBeMerged[i] = fs.createReadStream(file);
+      return true;
+    } else {
+      return false;
+    }
+  });
+  return _createMergeTransform(toBeMerged);
+}
 
-  // Incorporates the specified KontainerElement into this Timeline instance.
-  import(element) {
+function inspect(callback) {
 
-  }
+}
 
-  // Returns a list of objects that holds track information.
-  getTracks() {
-    return null;
-  }
+function drop(index) {
 
-  // Removes the specified track from this Timeline instance.
-  drop(index) {
+}
 
-  }
+function shift(index, offset) {
 
-  // Adjusts AV-sync by repositioning the specified track forward/backward according to the offset
-  shift(index, offset) {
+}
 
-  }
+function slice(start, end) {
 
-  // Cuts off any other parts than the specified range of the file.
-  slice(start, end) {
+}
 
-  }
-
-  // Returns a KontainerElement after applying any changes made to this Timeline instance so far.
-  export() {
-
-  }
+export default {
+  add,
+  inspect,
+  drop,
+  shift,
+  slice
 }

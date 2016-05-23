@@ -1,39 +1,60 @@
-import Kontainer from 'kontainer-js';
-import {Timeline} from 'ro-edit';
-import MP4 from '../helper/MP4';
-import WebM from '../helper/WebM';
+import fs from 'fs';
+import path from 'path';
+import ro from 'ro-edit';
 
-describe('Timeline', () => {
+const TEST_CONTENTS_PATH = path.join(__dirname, '../contents');
+
+describe('ro', () => {
+  const stream = require('stream');
+  class OutputStream extends stream.Writable {
+    constructor(cb, options) {
+      super(options);
+      this.data = null;
+      this.on('finish', () => {
+        expect(this.data).not.toBe(null);
+        cb();
+      });
+    }
+
+    _write(chunk, encoding, done) {
+      if (this.data) {
+        this.data = Buffer.concat([this.data, chunk]);
+      } else {
+        this.data = chunk;
+      }
+      done();
+    }
+  }
 
   describe('MP4', () => {
+    const MP4_PATH = path.join(TEST_CONTENTS_PATH, 'MP4');
 
     beforeEach(() => {
     });
 
-    it('should be able to get the information of all the tracks imported', () => {
-      const tl = new Timeline();
-      tl.import(MP4.fullAV);
-      tl.import(MP4.audioOnly1);
-      tl.import(MP4.audioOnly2);
-      const tracks = tl.getTracks();
+    it('should be able to get the information of all the tracks imported', (done) => {
+      const mainAV = path.join(MP4_PATH, 'main-av.mp4');
+      const subA = path.join(MP4_PATH, 'a-only.mp4');
 
-      expect(tracks).not.toBe(null);
-    });
+      fs.createReadStream(mainAV)
+      .pipe(ro.add(subA))
+      .pipe(new OutputStream(done));
+    }, 60000);
   });
 
   describe('WebM', () => {
+    const WEBM_PATH = path.join(TEST_CONTENTS_PATH, 'WebM');
 
     beforeEach(() => {
     });
 
-    it('should be able to get the information of all the tracks imported', () => {
-      const tl = new Timeline();
-      tl.import(WebM.fullAV);
-      tl.import(WebM.audioOnly1);
-      tl.import(WebM.audioOnly2);
-      const tracks = tl.getTracks();
+    it('should be able to get the information of all the tracks imported', (done) => {
+      const mainAV = path.join(WEBM_PATH, 'main-av.webm');
+      const subA = path.join(WEBM_PATH, 'a-only.webm');
 
-      expect(tracks).not.toBe(null);
-    });
+      fs.createReadStream(mainAV)
+      .pipe(ro.add(subA))
+      .pipe(new OutputStream(done));
+    }, 60000);
   });
 });

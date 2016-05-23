@@ -38,8 +38,9 @@
   },
   "dependencies": {
     "dist-es6": "^0.1.18",
-    "yargs": "^4.7.1",
-    "kontainer-js": "^2.1.6"
+    "is-stream": "^1.1.0",
+    "kontainer-js": "^2.1.8",
+    "yargs": "^4.7.1"
   },
   "engines": {
     "npm": "^3.0.0"
