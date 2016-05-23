@@ -12,6 +12,7 @@ describe('ro', () => {
       this.data = null;
       this.on('finish', () => {
         expect(this.data).not.toBe(null);
+        expect(this.data.length).not.toBe(0);
         cb();
       });
     }
