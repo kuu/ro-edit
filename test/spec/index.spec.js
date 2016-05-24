@@ -34,8 +34,8 @@ describe('ro', () => {
     });
 
     it('should be able to get the information of all the tracks imported', (done) => {
-      const mainAV = path.join(MP4_PATH, 'main-av.mp4');
-      const subA = path.join(MP4_PATH, 'a-only.mp4');
+      const mainAV = path.join(MP4_PATH, 'v-only-moov.mp4');
+      const subA = path.join(MP4_PATH, 'a-only-moov.mp4');
 
       fs.createReadStream(mainAV)
       .pipe(ro.add(subA))
@@ -50,7 +50,7 @@ describe('ro', () => {
     });
 
     it('should be able to get the information of all the tracks imported', (done) => {
-      const mainAV = path.join(WEBM_PATH, 'main-av.webm');
+      const mainAV = path.join(WEBM_PATH, 'v-only.webm');
       const subA = path.join(WEBM_PATH, 'a-only.webm');
 
       fs.createReadStream(mainAV)
