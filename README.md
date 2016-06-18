@@ -25,11 +25,11 @@ import ro from 'ro-edit';
 
 // Apply changes to a video file
 fs.createReadStream('./main.mp4')
-.pipe(ro.add('./audio-jp.mp4')) // Add second language
-.pipe(ro.add('./audio-fr.mp4')) // Add another language
-.pipe(ro.drop(0)) // Remove the first track
-.pipe(ro.shift(1, -10)) // Shift the second track 10 seconds backward
-.pipe(ro.slice(10, 50)) // Trim the first 10 seconds and the last 10 seconds
+.pipe(ro.createMerge('./audio-jp.mp4')) // Add second language
+.pipe(ro.createMerge('./audio-fr.mp4')) // Add another language
+.pipe(ro.createDrop(0)) // Remove the first track
+.pipe(ro.createShift(1, -10)) // Shift the second track 10 seconds backward
+.pipe(ro.createSlice(10, 50)) // Trim the first 10 seconds and the last 10 seconds
 .pipe(fs.createWriteStream('./output.mp4')); // Done
 
 // Or, you can inspect the stream to learn the structure of the file
@@ -41,8 +41,8 @@ fs.createReadStream('./main.mp4')
 
 ### Methods
 
-#### `add(files)`
-Merge files.
+#### `createMerge(files)`
+Creates a transform stream to merge files.
 
 ##### params
 
@@ -54,28 +54,18 @@ Merge files.
 A transform stream
 
 ---
-#### `inspect(callback)`
+#### `inspect()`
 Provides a way to inspect track information.
 
 ##### params
-| name | type | description |
-|---|---|---|
-| `callback` | Function | A function with the following signature |
-
-##### return value
-A transform stream
-
-###### params of `callback`
-| name | type | description |
-|---|---|---|
-| `track` | Object | An object that holds `type`, `name`, `duration`, etc. of the track TBD.|
-
-##### return value of `callback`
 none
 
+##### return value
+A promise object that resolves an object with `type`, `name`, `duration`, etc. TBD.
+
 ---
-#### `drop(index)`
-Removes the specified track from the file.
+#### `createDrop(index)`
+Creates a transform stream to remove the specified track from the file.
 
 ##### params
 | name | type | description |
@@ -86,8 +76,8 @@ Removes the specified track from the file.
 A transform stream
 
 ---
-#### `shift(index, offset)`
-Adjusts AV-sync by repositioning the specified track forward/backward according to the `offset`
+#### `createShift(index, offset)`
+Create a transform stream to adjust AV-sync by repositioning the specified track forward/backward according to the `offset`
 
 ##### params
 | name | type | description |
@@ -99,8 +89,8 @@ Adjusts AV-sync by repositioning the specified track forward/backward according 
 A transform stream
 
 ---
-#### `slice(start, end)`
-Cuts off any other parts than the specified range of the file.
+#### `createSlice(start, end)`
+Creates a transform stream to cut off any other parts than the specified range of the file.
 
 | name | type | description |
 |---|---|---|
