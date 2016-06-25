@@ -25,13 +25,34 @@ import drop from 'ro-drop';
 import shift from 'ro-shift';
 import slice from 'ro-slice';
 
-// Applies changes to a video file
-ro.parse('./main.mp4')
-.pipe(merge('./audio/**/sub.mp4')) // Adds secondary languages
+// Example of applying changes to a single file
+ro.parse('./input.mp4')
 .pipe(drop(1000)) // Removes track with the specified track-id
 .pipe(shift(2000, -10)) // Repositions the specified track 10 seconds backward
 .pipe(slice(10, 50)) // Trims the first 10 seconds and the last 10 seconds
 .pipe(ro.render('./output.mp4')); // Done
+
+// Example of merging multiple files
+const mergeStream = merge();
+mergeStream
+.pipe(slice(10, 50)) // Trims the first 10 seconds and the last 10 seconds
+.pipe(ro.render('./output.mp4')); // Done
+let i = 0;
+function onEnd() {
+  if (++i === 2) {
+    mergeStream.end();
+  }
+}
+// Read main audio+video file
+ro.parse('./main.mp4')
+.on('end', onEnd)
+.pipe(mergeStream, {end: false});
+// Read sub audio files
+ro.parse('./audio/**/sub.mp4')
+.on('end', onEnd)
+.pipe(mergeStream, {end: false});
+
+
 ```
 
 ### Methods
