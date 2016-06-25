@@ -1,129 +1,91 @@
 # ro-edit
-A simple video editing tool written in JavaScript. It focuses on track composition, trimming, and av-sync adjustment.
+A simple video editing tool inspired by gulp.
 
 ## Features
 
 ### What `ro-edit` supports
-* Retrieval of track information
-* Removal of tracks
-* Merging two separate files into one
-* AV-sync adjustment
-* Trimming
+It completely depends on what plugins you use but there're plugins as follows:
+* `ro-merge`: Merging of files
+* `ro-drop`: Removal of tracks
+* `ro-shift`: AV-sync adjustment
+* `ro-slice`: Trimming
 
 ### What `ro-edit` does not support
-* It does not support any file format other than MP4 and WebM, i.e. any input data need to be wrapped with either MP4 or WebM container.
+It also depends on the plugins but there're some basic limitations:
+* It does not support any file format other than the MP4 and WebM, i.e. the input data need to be wrapped with either the MP4 or WebM container.
 * It does not support mixed format, i.e. you can't merge an MP4 file with a WebM file.
-* It does not perform any trans-coding, i.e. all the editing is done without decoding or encoding of media data.
-* It does not support any mixing of audio, i.e. multiple audio tracks are not be merged and each track keeps its original number of channels.
 
 ## API
 
 ### Example
 ```js
-import fs from 'fs';
 import ro from 'ro-edit';
+import merge from 'ro-merge';
+import drop from 'ro-drop';
+import shift from 'ro-shift';
+import slice from 'ro-slice';
 
-// Apply changes to a video file
-fs.createReadStream('./main.mp4')
-.pipe(ro.createMerge('./audio-jp.mp4')) // Add second language
-.pipe(ro.createMerge('./audio-fr.mp4')) // Add another language
-.pipe(ro.createDrop(0)) // Remove the first track
-.pipe(ro.createShift(1, -10)) // Shift the second track 10 seconds backward
-.pipe(ro.createSlice(10, 50)) // Trim the first 10 seconds and the last 10 seconds
-.pipe(fs.createWriteStream('./output.mp4')); // Done
-
-// Or, you can inspect the stream to learn the structure of the file
-fs.createReadStream('./main.mp4')
-.pipe(ro.inspect((track, i) => {
-  console.log(`Track[${i}]: type=${track.type} name=${track.name}`);
-});
+// Applies changes to a video file
+ro.parse('./main.mp4')
+.pipe(merge('./audio/**/sub.mp4')) // Adds secondary languages
+.pipe(drop(1000)) // Removes track with the specified track-id
+.pipe(shift(2000, -10)) // Repositions the specified track 10 seconds backward
+.pipe(slice(10, 50)) // Trims the first 10 seconds and the last 10 seconds
+.pipe(ro.render('./output.mp4')); // Done
 ```
 
 ### Methods
 
-#### `createMerge(files)`
-Creates a transform stream to merge files.
+#### `parse(file, options)`
+Creates a readable stream in object mode that generates `KontainerElement`
 
 ##### params
 
 | name | type | description |
 |---|---|---|
-| `files` | String, file object, or array of those types| Specifies additional file(s) |
+| `file` | String or ReadableStream | Specifies the input file |
+| `options` | Object| TBD. |
 
 ##### return value
-A transform stream
+A readable stream
 
 ---
-#### `inspect()`
-Provides a way to inspect track information.
-
-##### params
-none
-
-##### return value
-A promise object that resolves an object with `type`, `name`, `duration`, etc. TBD.
-
----
-#### `createDrop(index)`
-Creates a transform stream to remove the specified track from the file.
+#### `render(file, options)`
+Creates a writable stream that consumes `KontainerElement`
 
 ##### params
 | name | type | description |
 |---|---|---|
-| index  | `Number` | The index of the track within the file |
+| `file` | String or WritableStream| Specifies the output file |
+| `options` | Object| TBD. |
 
 ##### return value
-A transform stream
-
----
-#### `createShift(index, offset)`
-Create a transform stream to adjust AV-sync by repositioning the specified track forward/backward according to the `offset`
-
-##### params
-| name | type | description |
-|---|---|---|
-| index  | `Number` | Index in the track info. |
-| offset  | `Number` | Signed number in seconds. e.g. -10 means repositioning 10 seconds backward |
-
-##### return value
-A transform stream
-
----
-#### `createSlice(start, end)`
-Creates a transform stream to cut off any other parts than the specified range of the file.
-
-| name | type | description |
-|---|---|---|
-| start  | `Number` | The position in seconds. The first n seconds of the file will be cut off, where n = `start - 0`. The default value is 0. |
-| end  | `Number` | The position in seconds. The last n seconds of the file will be cut off, where n = `the file's duration - end`. The default value is the file's duration. |
-
-##### return value
-A transform stream
-
----
+A writable stream
 
 ## CLI
+CLI (`ro`) automatically loads the plugin with the specified subcommand. So, the module needs to be installed locally or globally.
+
 
 ### List all the tracks contained in a file
 ```
 $ ro ls file.mp4
 ```
 
+### Merge files
+```
+$ ro merge main.webm audio/*/sub.webm > output.webm
+```
+
 ### Remove a track from a file
 ```
-$ cat file.mp4 | ro drop 0 > output.mp4
- => Removes the first track
+$ cat file.mp4 | ro drop 999 > output.mp4
+ => Removes a track (track-id=999)
 ```
 
-### Adjust av-sync
+### Av-sync adjustment
 ```
-$ cat file.mp4 | ro shift 0 -10 > output.mp4
- => Shifts the first track 10 seconds backward
-```
-
-### File composition
-```
-$ ro merge video.webm audio-en.webm audio-fr.webm > output.webm
+$ cat file.mp4 | ro shift 999 -10 > output.mp4
+ => Shifts the track 10 seconds backward
 ```
 
 ### Trimming
